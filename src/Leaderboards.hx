@@ -31,6 +31,10 @@ class Leaderboards {
 	static var host = "https://lb.randomityguy.me";
 	static var game = "Ultra";
 
+	public static function setHost(url:String) {
+		host = url;
+	}
+
 	public static function submitScore(mission:String, score:Float, rewindUsed:Bool, needsReplayCb:(Bool, Int) -> Void) {
 		if (!StringTools.startsWith(mission, "data/"))
 			mission = "data/" + mission;

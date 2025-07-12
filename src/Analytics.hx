@@ -19,6 +19,10 @@ typedef PayloadData = {
 class Analytics {
 	static var umami = "https://analytics.randomityguy.me/api/send";
 
+	public static function setURL(url:String) {
+		umami = url;
+	}
+
 	public static function trackSingle(eventName:String) {
 		var p = payload(eventName, null);
 		var json = Json.stringify(p);

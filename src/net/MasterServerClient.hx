@@ -41,6 +41,10 @@ class MasterServerClient {
 	var stopMutex:sys.thread.Mutex = new sys.thread.Mutex();
 	#end
 
+	public static function setServerIp(ip:String) {
+		serverIp = ip;
+	}
+
 	public function new(onOpenFunc:() -> Void, onErrorFunc:() -> Void) {
 		#if hl
 		wsThread = sys.thread.Thread.create(() -> {
