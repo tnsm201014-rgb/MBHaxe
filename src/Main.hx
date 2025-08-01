@@ -27,6 +27,9 @@ import src.Gamepad;
 import src.Http;
 import src.Renderer;
 import src.MissionList;
+import src.Analytics;
+import net.MasterServerClient;
+import src.Leaderboards;
 
 class Main extends hxd.App {
 	var marbleGame:MarbleGame;
@@ -34,6 +37,8 @@ class Main extends hxd.App {
 	var loaded:Bool = false;
 
 	var frameByFrame:Bool = false;
+
+	public static var isDiscord:Bool = false;
 
 	// var timeAccumulator:Float = 0.0;
 
@@ -50,6 +55,13 @@ class Main extends hxd.App {
 		#end
 
 		#if js
+		isDiscord = js.Browser.window.location.href.indexOf("discord") != -1;
+		if (isDiscord) {
+			Analytics.setURL(".proxy/analytics/api/send");
+			Leaderboards.setHost(".proxy/lb");
+			MasterServerClient.setServerIp(".proxy/mbomaster");
+		}
+
 		var zoomRatio = (Util.isTouchDevice() && !Util.isTablet()) ? js.Browser.window.screen.height * js.Browser.window.devicePixelRatio / 768 : js.Browser.window.devicePixelRatio; // js.Browser.window.devicePixelRatio;
 		if (Util.isIPhone())
 			zoomRatio = 1.5;

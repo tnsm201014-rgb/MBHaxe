@@ -132,7 +132,7 @@ class ManifestEntry extends FileEntry {
 				onReady();
 		} else {
 			var prefix = "";
-			if (MarbleGame.instance.isDiscord) {
+			if (Main.isDiscord) {
 				prefix = ".proxy/";
 			}
 

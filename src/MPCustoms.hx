@@ -23,7 +23,7 @@ class MPCustoms {
 	public static function loadMissionList() {
 		if (missionList.length == 0 && !_requestSent) {
 			_requestSent = true;
-			Http.get("https://marbleblastultra.randomityguy.me/data/ultraCustom.json", (b) -> {
+			Http.get(Main.isDiscord ? ".proxy/data/ultraCustom.json" : "https://marbleblastultra.randomityguy.me/data/ultraCustom.json", (b) -> {
 				var misList = Json.parse(b.toString());
 				missionList = misList;
 				missionList.sort((a, b) -> {
@@ -42,7 +42,8 @@ class MPCustoms {
 
 	public static function download(mission:MPCustomEntry, onFinish:() -> Void, onFail:() -> Void) {
 		var lastSlashIdx = mission.path.lastIndexOf('/');
-		var dlPath = "https://marbleblastultra.randomityguy.me/" + StringTools.urlEncode(mission.path.substr(0, lastSlashIdx)) + ".zip";
+		var dlHost = Main.isDiscord ? ".proxy/" : "https://marbleblastultra.randomityguy.me/";
+		var dlPath = dlHost + StringTools.urlEncode(mission.path.substr(0, lastSlashIdx)) + ".zip";
 		Http.get(dlPath, (zipData) -> {
 			var reader = new Reader(new BytesInput(zipData));
 			var entries:Array<haxe.zip.Entry> = null;

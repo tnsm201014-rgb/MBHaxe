@@ -70,8 +70,6 @@ class MarbleGame {
 
 	var replayExitGui:Class<GuiControl>;
 
-	var isDiscord:Bool = false;
-
 	public function new(scene2d:h2d.Scene, scene:h3d.scene.Scene) {
 		Console.log("Initializing the game...");
 		canvas = new Canvas(scene2d, cast this);
@@ -81,13 +79,6 @@ class MarbleGame {
 		this.touchInput = new TouchInput();
 
 		#if js
-		isDiscord = js.Browser.window.location.href.indexOf("discord.com") != -1;
-		if (isDiscord) {
-			Analytics.setURL(".proxy/analytics/api/send");
-			Leaderboards.setHost(".proxy/lb");
-			MasterServerClient.setServerIp(".proxy/mbomaster");
-		}
-
 		// Pause shit
 		if (Util.isTouchDevice())
 			this.touchInput.registerTouchInput();
