@@ -67,6 +67,7 @@ class Http {
 			}
 			hl.Gc.enable(false);
 			http.request(req.post);
+			hl.Gc.enable(true);
 		}
 	}
 	#end

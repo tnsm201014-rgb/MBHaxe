@@ -4,7 +4,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.randomityguy.mbhaxe.mbu"
     android:installLocation="auto"
-    android:versionCode="9"
+    android:versionCode="10"
     android:versionName="2.2.3">
 
     <!-- Tell the system this app requires OpenGL ES 3.0. -->
