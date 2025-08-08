@@ -1,5 +1,6 @@
 package gui;
 
+import haxe.DynamicAccess;
 import src.MarbleGame;
 import hxd.res.BitmapFont;
 import h3d.Vector;
@@ -7,10 +8,10 @@ import src.ResourceLoader;
 import src.Settings;
 import src.Util;
 
-class OptionsListGui extends GuiImage {
+class ImportExportGui extends GuiImage {
 	var innerCtrl:GuiControl;
 
-	public function new(pauseGui:Bool = false) {
+	public function new() {
 		var res = ResourceLoader.getImage("data/ui/xbox/BG_fadeOutSoftEdge.png").resource.toTile();
 		super(res);
 		var domcasual32fontdata = ResourceLoader.getFileEntry("data/font/DomCasualD.fnt");
@@ -52,51 +53,87 @@ class OptionsListGui extends GuiImage {
 		rootTitle.position = new Vector(100, 30);
 		rootTitle.extent = new Vector(1120, 80);
 		rootTitle.text.textColor = 0xFFFFFF;
-		rootTitle.text.text = "HELP & OPTIONS";
+		rootTitle.text.text = "IMPORT & EXPORT";
 		rootTitle.text.alpha = 0.5;
 		innerCtrl.addChild(rootTitle);
 
 		var btnList = new GuiXboxList();
-		btnList.position = new Vector(70 - offsetX, 71);
+		btnList.position = new Vector(70 - offsetX, 165);
 		btnList.horizSizing = Left;
 		btnList.extent = new Vector(502, 500);
 		innerCtrl.addChild(btnList);
 
-		if (!pauseGui) {
-			btnList.addButton(3, 'Marble Appearance', (e) -> {
-				MarbleGame.canvas.setContent(new MarblePickerGui());
-			});
-		}
-		btnList.addButton(3, 'Input and Sound Options', (e) -> {
-			MarbleGame.canvas.setContent(new InputOptionsGui(pauseGui));
-		});
-		if (Util.isTouchDevice()) {
-			if (!pauseGui) {
-				btnList.addButton(3, 'Touch Controls', (e) -> {
-					MarbleGame.canvas.setContent(new TouchOptionsGui(pauseGui));
+		btnList.addButton(0, 'Import Progress', (e) -> {
+			hxd.File.browse((sel) -> {
+				sel.load((data) -> {
+					try {
+						// convert to string
+						var jsonStr = data.toString();
+						// parse JSON
+						var json = haxe.Json.parse(jsonStr);
+
+						var highScoreData:DynamicAccess<Array<Score>> = json.highScores;
+						for (key => value in highScoreData) {
+							Settings.highScores.set(key, value);
+						}
+						var easterEggData:DynamicAccess<Float> = json.easterEggs;
+						if (easterEggData != null) {
+							for (key => value in easterEggData) {
+								Settings.easterEggs.set(key, value);
+							}
+						}
+						MarbleGame.canvas.pushDialog(new MessageBoxOkDlg("Progress data imported successfully!"));
+						Settings.save();
+					} catch (e) {
+						MarbleGame.canvas.pushDialog(new MessageBoxOkDlg("Failed to import progress data: " + e.message));
+					}
 				});
+			}, {
+				title: "Select a progress file to import",
+				fileTypes: [
+					{name: "JSON files", extensions: ["json"]},
+					{name: "All files", extensions: ["*"]}
+				],
+			});
+		});
+		btnList.addButton(0, 'Export Progress', (e) -> {
+			#if sys
+			#if MACOS_BUNDLE
+			// open the finder to that folder
+			Sys.command('open "${Settings.settingsDir}"');
+			#else
+			// Just open the folder in the explorer.exe
+			Sys.command('explorer.exe "${Settings.settingsDir}"');
+			#end
+			MarbleGame.canvas.pushDialog(new MessageBoxOkDlg("The settings.json file contains your progress data. You can copy it to another device or share it with others."));
+			#end
+			#if js
+			// Serialize Settings to JSON
+			var localStorage = js.Browser.getLocalStorage();
+			if (localStorage != null) {
+				var settingsData = localStorage.getItem("MBHaxeSettings");
+				if (settingsData != null) {
+					// Download this
+					var replayBytes = settingsData;
+					var blob = new js.html.Blob([haxe.io.Bytes.ofString(replayBytes).getData()], {
+						type: 'application/octet-stream'
+					});
+					var url = js.html.URL.createObjectURL(blob);
+					var fname = 'settings.json';
+					var element = js.Browser.document.createElement('a');
+					element.setAttribute('href', url);
+					element.setAttribute('download', fname);
+
+					element.style.display = 'none';
+					js.Browser.document.body.appendChild(element);
+
+					element.click();
+
+					js.Browser.document.body.removeChild(element);
+					js.html.URL.revokeObjectURL(url);
+				}
 			}
-		} else {
-			btnList.addButton(3, 'Key Bindings', (e) -> {
-				MarbleGame.canvas.setContent(new InputSelectGui(pauseGui));
-			});
-		}
-		btnList.addButton(3, 'Video Options', (e) -> {
-			MarbleGame.canvas.setContent(new VideoOptionsGui(pauseGui));
-		});
-		if (!pauseGui) {
-			btnList.addButton(3, 'Misc Options', (e) -> {
-				MarbleGame.canvas.setContent(new MiscOptionsGui(pauseGui));
-			});
-			btnList.addButton(3, 'Import & Export', (e) -> {
-				MarbleGame.canvas.setContent(new ImportExportGui());
-			});
-		}
-		btnList.addButton(5, 'How to Play', (e) -> {
-			MarbleGame.canvas.setContent(new AboutMenuOptionsGui(pauseGui));
-		});
-		btnList.addButton(5, 'Credits', (e) -> {
-			MarbleGame.canvas.setContent(new HelpCreditsGui(5, pauseGui));
+			#end
 		});
 
 		var bottomBar = new GuiControl();
@@ -112,13 +149,7 @@ class OptionsListGui extends GuiImage {
 		backButton.horizSizing = Right;
 		backButton.gamepadAccelerator = [Settings.gamepadSettings.back];
 		backButton.accelerators = [hxd.Key.ESCAPE, hxd.Key.BACKSPACE];
-		if (pauseGui)
-			backButton.pressedAction = (e) -> {
-				MarbleGame.canvas.popDialog(this);
-				MarbleGame.instance.showPauseUI();
-			}
-		else
-			backButton.pressedAction = (e) -> MarbleGame.canvas.setContent(new MainMenuGui());
+		backButton.pressedAction = (e) -> MarbleGame.canvas.setContent(new OptionsListGui(false));
 		bottomBar.addChild(backButton);
 	}
 
