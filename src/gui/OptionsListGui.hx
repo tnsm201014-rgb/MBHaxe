@@ -52,7 +52,7 @@ class OptionsListGui extends GuiImage {
 		innerCtrl.addChild(rootTitle);
 
 		var btnList = new GuiXboxList();
-		btnList.position = new Vector(70 - offsetX, 165);
+		btnList.position = new Vector(70 - offsetX, 71);
 		btnList.horizSizing = Left;
 		btnList.extent = new Vector(502, 500);
 		innerCtrl.addChild(btnList);
@@ -76,6 +76,9 @@ class OptionsListGui extends GuiImage {
 		if (!pauseGui) {
 			btnList.addButton(3, 'Misc Options', (e) -> {
 				MarbleGame.canvas.setContent(new MiscOptionsGui(pauseGui));
+			});
+			btnList.addButton(3, 'Import & Export', (e) -> {
+				MarbleGame.canvas.setContent(new ImportExportGui());
 			});
 		}
 		btnList.addButton(5, 'How to Play', (e) -> {
