@@ -1,5 +1,6 @@
 package gui;
 
+import gui.GuiControl.MouseState;
 import haxe.DynamicAccess;
 import src.MarbleGame;
 import hxd.res.BitmapFont;
@@ -10,6 +11,7 @@ import src.Util;
 
 class ImportExportGui extends GuiImage {
 	var innerCtrl:GuiControl;
+	var importing:Bool = false;
 
 	public function new() {
 		var res = ResourceLoader.getImage("data/ui/xbox/BG_fadeOutSoftEdge.png").resource.toTile();
@@ -24,12 +26,7 @@ class ImportExportGui extends GuiImage {
 		this.position = new Vector();
 		this.extent = new Vector(640, 480);
 
-		#if hl
-		var scene2d = hxd.Window.getInstance();
-		#end
-		#if (js || uwp)
-		var scene2d = MarbleGame.instance.scene2d;
-		#end
+		var scene2d = MarbleGame.canvas.scene2d;
 
 		var offsetX = (scene2d.width - 1280) / 2;
 		var offsetY = (scene2d.height - 720) / 2;
@@ -64,76 +61,34 @@ class ImportExportGui extends GuiImage {
 		innerCtrl.addChild(btnList);
 
 		btnList.addButton(0, 'Import Progress', (e) -> {
-			hxd.File.browse((sel) -> {
-				sel.load((data) -> {
-					try {
-						// convert to string
-						var jsonStr = data.toString();
-						// parse JSON
-						var json = haxe.Json.parse(jsonStr);
+			trace("Start prefs import");
+			importing = true;
+			Settings.start_import_prefs((data) -> {
+				try {
+					// convert to string
+					var jsonStr = @:privateAccess String.fromUTF8(data);
+					// parse JSON
+					var json = haxe.Json.parse(jsonStr);
 
-						var highScoreData:DynamicAccess<Array<Score>> = json.highScores;
-						for (key => value in highScoreData) {
-							Settings.highScores.set(key, value);
-						}
-						var easterEggData:DynamicAccess<Float> = json.easterEggs;
-						if (easterEggData != null) {
-							for (key => value in easterEggData) {
-								Settings.easterEggs.set(key, value);
-							}
-						}
-						MarbleGame.canvas.pushDialog(new MessageBoxOkDlg("Progress data imported successfully!"));
-						Settings.save();
-					} catch (e) {
-						MarbleGame.canvas.pushDialog(new MessageBoxOkDlg("Failed to import progress data: " + e.message));
+					var highScoreData:DynamicAccess<Array<Score>> = json.highScores;
+					for (key => value in highScoreData) {
+						Settings.highScores.set(key, value);
 					}
-				});
-			}, {
-				title: "Select a progress file to import",
-				fileTypes: [
-					{name: "JSON files", extensions: ["json"]},
-					{name: "All files", extensions: ["*"]}
-				],
+					var easterEggData:DynamicAccess<Float> = json.easterEggs;
+					if (easterEggData != null) {
+						for (key => value in easterEggData) {
+							Settings.easterEggs.set(key, value);
+						}
+					}
+					MarbleGame.canvas.pushDialog(new MessageBoxOkDlg("Progress data imported successfully!"));
+					Settings.save();
+				} catch (e) {
+					MarbleGame.canvas.pushDialog(new MessageBoxOkDlg("Failed to import progress data: " + e.message));
+				}
 			});
 		});
 		btnList.addButton(0, 'Export Progress', (e) -> {
-			#if sys
-			#if MACOS_BUNDLE
-			// open the finder to that folder
-			Sys.command('open "${Settings.settingsDir}"');
-			#else
-			// Just open the folder in the explorer.exe
-			Sys.command('explorer.exe "${Settings.settingsDir}"');
-			#end
-			MarbleGame.canvas.pushDialog(new MessageBoxOkDlg("The settings.json file contains your progress data. You can copy it to another device or share it with others."));
-			#end
-			#if js
-			// Serialize Settings to JSON
-			var localStorage = js.Browser.getLocalStorage();
-			if (localStorage != null) {
-				var settingsData = localStorage.getItem("MBHaxeSettings");
-				if (settingsData != null) {
-					// Download this
-					var replayBytes = settingsData;
-					var blob = new js.html.Blob([haxe.io.Bytes.ofString(replayBytes).getData()], {
-						type: 'application/octet-stream'
-					});
-					var url = js.html.URL.createObjectURL(blob);
-					var fname = 'settings.json';
-					var element = js.Browser.document.createElement('a');
-					element.setAttribute('href', url);
-					element.setAttribute('download', fname);
-
-					element.style.display = 'none';
-					js.Browser.document.body.appendChild(element);
-
-					element.click();
-
-					js.Browser.document.body.removeChild(element);
-					js.html.URL.revokeObjectURL(url);
-				}
-			}
-			#end
+			Settings.export_prefs();
 		});
 
 		var bottomBar = new GuiControl();
@@ -163,5 +118,12 @@ class ImportExportGui extends GuiImage {
 		innerCtrl.extent = new Vector(640 - subX, 480 - subY);
 
 		super.onResize(width, height);
+	}
+
+	override function update(dt:Float, mouseState:MouseState) {
+		super.update(dt, mouseState);
+		if (importing) {
+			Settings.call_import_cb();
+		}
 	}
 }
