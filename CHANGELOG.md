@@ -1,3 +1,8 @@
+# 1.2.4
+This update brings the following changes:
+- Added Import and Export Progress to Options menu to transfer game progress between devices.
+- Fixed a critical bug causing the game to leak memory.
+
 # 1.2.3
 This update brings the following changes:
 - Balanced out the Rating curves for a lot of levels.
